@@ -1,0 +1,76 @@
+cd /home/k8s-admin/containers/Kubernetes/apis/mulesoft/airport-locator-app
+
+===============================================================================
+Build Code and Docker Container
+===============================================================================
+docker build -t srivatsabc/airport-locator-app:001 .
+docker push srivatsabc/airport-locator-app:001
+
+===============================================================
+Create namespace:
+===============================================================
+kubectl create namespace system-api-ns
+
+===============================================================
+Create and verify configmap:
+===============================================================
+kubectl create -n system-api-ns configmap airport-locator-app-config --from-literal=RUNTIME.ENV.TYPE=k8s
+
+kubectl -n system-api-ns get configmap
+
+===============================================================
+Create deployment using yaml:
+===============================================================
+kubectl apply -n system-api-ns -f airport-locator-deployment.yaml
+
+===============================================================
+Check deployments within namespace:
+===============================================================
+kubectl -n system-api-ns get deployments
+
+===============================================================
+Check status of pods within namespace:
+===============================================================
+kubectl -n system-api-ns get pods
+
+===============================================================
+Check service within namespace to access api:
+===============================================================
+kubectl -n system-api-ns create -f airport-locator-service.yaml
+
+===============================================================
+Check service within namespace:
+===============================================================
+kubectl -n system-api-ns get svc
+
+
+===============================================================
+Access api on the service port:
+===============================================================
+http://127.0.0.1:30087/api/routes/LHR
+
+
+===============================================================
+Delete service and deployment
+===============================================================
+
+kubectl delete deployment airport-locator-app --namespace=system-api-ns
+
+kubectl delete service airport-locator-app --namespace=system-api-ns
+
+
+kubectl logs -n system-api-ns airport-locator-app-5c56c8fffb-wqj6v ${CONTAINER_NAME}
+
+
+kubectl delete deployment nginx-deployment --namespace=nginx-namespace
+
+
+
+
+Not Used
+
+kubectl apply -f deployment.yml
+
+kubectl expose -n nginx-namespace deployment/nginx-deployment --type="NodePort" --port 80
+
+http://nginx-deployment:31525
