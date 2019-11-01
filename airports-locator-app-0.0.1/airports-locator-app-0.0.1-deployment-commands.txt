@@ -14,7 +14,7 @@ kubectl create namespace system-api-ns
 ===============================================================
 Create and verify configmap:
 ===============================================================
-kubectl create -n system-api-ns configmap airport-locator-app-config --from-literal=RUNTIME.ENV.TYPE=k8s
+kubectl create -n system-api-ns configmap airport-locator-app-config --from-literal=RUNTIME_ENV_TYPE=k8s
 
 kubectl -n system-api-ns get configmap
 
