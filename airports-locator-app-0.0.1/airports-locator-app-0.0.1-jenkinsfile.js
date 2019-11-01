@@ -25,7 +25,7 @@ pipeline {
               doGenerateSubmoduleConfigurations: false,
               extensions: [[$class: 'SparseCheckoutPaths',  sparseCheckoutPaths:[[$class:'SparseCheckoutPath', path:'airports-locator-app-0.0.1/']]]                        ],
               submoduleCfg: [],
-              userRemoteConfigs: [[credentialsId: 'srivatsabc_git_login', url: 'https://github.com/srivatsabc/system-api-repository_2.git']]])
+              userRemoteConfigs: [[credentialsId: 'srivatsabc_git_login', url: 'https://github.com/srivatsabc/system_api_repository_2.git']]])
 
             sh "ls -lat"
           }
