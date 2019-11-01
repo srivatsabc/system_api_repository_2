@@ -1,14 +1,14 @@
 pipeline {
 
   environment {
-     application = "airport-locator-app-0.0.1"
+     application = "airports-locator-app-0.0.1"
      docker_id = "srivatsabc"
      docker_pwd = "wipro123"
      docker_repo = "airports-locator-app"
      docker_tag = "system-api-v0.0.1"
      deploymemt_yaml = "airports-locator-app-0.0.1-deployment.yaml"
      service_yaml = "airports-locator-app-0.0.1-service.yaml"
-     k8s_namespace = "experience-api-ns"
+     k8s_namespace = "system-api-ns"
      k8s_app = "airports-locator-app"
      config_map = "airports-locator-app-config"
    }
