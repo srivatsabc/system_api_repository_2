@@ -1,141 +1,129 @@
 pipeline {
 
-  environment {
-     application = "airports-locator-app-0.0.1"
-     docker_id = "srivatsabc"
-     docker_pwd = "wipro123"
-     docker_repo = "airports-locator-app"
-     docker_tag = "system-api-v0.0.1"
-     deploymemt_yaml = "airports-locator-app-0.0.1-deployment.yaml"
-     service_yaml = "airports-locator-app-0.0.1-service.yaml"
-     k8s_namespace = "system-api-ns"
-     k8s_app = "airports-locator-app"
-     config_map = "airports-locator-app-config"
-   }
+	environment {
+	     git_subdirectory = "airports-locator-app-0.0.1"
+	     git_repo_url = "https://github.com/srivatsabc/system_api_repository_2.git"
+	     okd_app = "airports-locator-app-v001"
+	     okd_namespace = "system-api-ns"
+	     config_map = "airports-locator-app-v001-config"    	 
+	     docker_id = "srivatsabc"
+	     docker_repo = "airports-locator-app"
+	     docker_tag = "os-s-api-v0.0.1"
+	     docker_pwd = "wipro123"
+	     deploymemt_yaml = "airports-locator-app-0.0.1-deployment.yaml"
+	     service_yaml = "airports-locator-app-0.0.1-service.yaml"     
+	   }
 
   agent {
       label "master"
   }
 
   stages {
-     stage('Checkout') {
-          steps {
-            checkout([$class: 'GitSCM',
-              branches: [[name: 'master']],
-              doGenerateSubmoduleConfigurations: false,
-              extensions: [[$class: 'SparseCheckoutPaths',  sparseCheckoutPaths:[[$class:'SparseCheckoutPath', path:'airports-locator-app-0.0.1/']]]                        ],
-              submoduleCfg: [],
-              userRemoteConfigs: [[credentialsId: 'srivatsabc_git_login', url: 'https://github.com/srivatsabc/system_api_repository_2.git']]])
+	     stage('Checkout') {
+	          steps {
+	            checkout([$class: 'GitSCM',
+	              branches: [[name: 'master']],
+	              doGenerateSubmoduleConfigurations: false,
+	              extensions: [[$class: 'SparseCheckoutPaths',  sparseCheckoutPaths:[[$class:'SparseCheckoutPath', path:"${git_subdirectory}/"]]]                        ],
+	              submoduleCfg: [],
+	              userRemoteConfigs: [[credentialsId: 'srivatsabc_git_login', url: "${git_repo_url}"]]])
 
-            sh "ls -lat"
-          }
-      }
-     
-     stage('Build in maven') {
-         steps {
-           sh "echo building $application/pom.xml"
-           sh 'mvn -B -f $application/pom.xml clean install'
-         }
-       }
+	            sh "ls -lat"
+	          }
+	      }
 
-     stage('Kubernetes deployment delete') {
-        steps {
-          script {
-            sh "echo deleting the current kubernetes deployment $k8s_app from namespace $k8s_namespace"
-            status = sh(returnStatus: true, script: "kubectl delete deployment $k8s_app --namespace=$k8s_namespace")
-            if (status == 0){
-              stage('Kubernetes service delete') {
-                  script{
-                    sh "echo deleting the current kubernetes service $k8s_app from namespace $k8s_namespace"
-                    status = sh(returnStatus: true, script: "kubectl delete service $k8s_app --namespace=$k8s_namespace")
-                    if (status == 0){
-                      stage('Deleting current docker image from local repo'){
-                        sh "echo deleting docker image from local $docker_id/$docker_repo:$docker_tag"
-                        status = sh(returnStatus: true, script: "docker rmi $docker_id/$docker_repo:$docker_tag -f")
-                        if (status == 0){
-                          sh "echo Delete kube deployment service and docker image successfully"
-                        }else{
-                          stage('Nothing docker image to delete'){
-                            sh "echo no docker image to delete in local repo"
-                          }
-                        }
-                      }
-                    }else{
-                      stage('No Kubernetes service to delete'){
-                        sh "echo no service available in kubernetes"
-                      }
-                    }
-                  }
-              }
-            }else{
-              stage('No Kubernetes deployment to delete'){
-                sh "echo no deployment available in kubernetes"
-              }
-            }
-          }
-        }
-      }
+	    stage('Build in maven') {
+	      steps {
+	        sh "echo building $git_subdirectory/pom.xml"
+	        sh 'mvn -B -f $git_subdirectory/pom.xml clean install'
+	      }
+	    }
 
-    stage('Build docker image') {
-      steps {
-        sh "echo build docker image $docker_id/$docker_repo:$docker_tag"
-        sh 'docker build -t $docker_id/$docker_repo:$docker_tag $application/.'
-      }
-    }
+	    stage('OpenShift deployment delete') {
+	        steps {
+	          script {
+	            sh "echo deleting the current OpenShift deployment $okd_app from namespace $okd_namespace"
+	            status = sh(returnStatus: true, script: "oc delete deployment $okd_app --namespace=$okd_namespace")
+	            if (status == 0){
+	              stage('OpenShift service delete') {
+	                  script{
+	                    sh "echo deleting the current OpenShift service $okd_app from namespace $okd_namespace"
+	                    status = sh(returnStatus: true, script: "oc delete service $okd_app --namespace=$okd_namespace")
+	                    if (status == 0){
+	                      stage('Deleting current docker image from local repo'){
+	                        sh "echo deleting docker image from local $docker_id/$docker_repo:$docker_tag"
+	                        status = sh(returnStatus: true, script: "docker rmi $docker_id/$docker_repo:$docker_tag -f")
+	                        if (status == 0){
+	                          sh "echo Delete kube deployment service and docker image successfully"
+	                        }else{
+	                          stage('Nothing docker image to delete'){
+	                            sh "echo no docker image to delete in local repo"
+	                          }
+	                        }
+	                      }
+	                    }else{
+	                      stage('No OpenShift service to delete'){
+	                        sh "echo no service available in OpenShift"
+	                      }
+	                    }
+	                  }
+	              }
+	            }else{
+	              stage('No OpenShift deployment to delete'){
+	                sh "echo no deployment available in OpenShift"
+	              }
+	            }
+	          }
+	        }
+	      }
 
-    stage('Docker login') {
-      steps {
-        sh "echo loging into Docker hub"
-        sh 'docker login -u $docker_id -p $docker_pwd'
-      }
-    }
+	    stage('Build docker image') {
+	      steps {
+	        sh "echo build docker image $docker_id/$docker_repo:$docker_tag"
+	        sh 'docker build -t $docker_id/$docker_repo:$docker_tag $git_subdirectory/.'
+	      }
+	    }
 
-    stage('Docker push') {
-      steps {
-        sh "echo Pushing $docker_id/$docker_repo:$docker_tag to Docker hub"
-        sh 'docker push $docker_id/$docker_repo:$docker_tag'
-      }
-    }
+	    stage('Docker login') {
+	      steps {
+	        sh "echo loging into Docker hub"
+	        sh 'docker login -u $docker_id -p $docker_pwd'
+	      }
+	    }
 
-    /*
-    stage('Delete existing Kubernetes deployment') {
-      steps {
-        sh 'kubectl delete deployment $k8s_app --namespace=$k8s_namespace'
-      }
-    }
+	    stage('Docker push') {
+	      steps {
+	        sh "echo Pushing $docker_id/$docker_repo:$docker_tag to Docker hub"
+	        sh 'docker push $docker_id/$docker_repo:$docker_tag'
+	      }
+	    }
+	    
+	    stage('OpenShift configmap') {
+	        steps {
+	          script {
+	            sh "echo creating oc create -n $okd_namespace configmap $config_map --from-literal=RUNTIME_ENV_TYPE=k8s"
+	            statusCreate = sh(returnStatus: true, script: "oc create -n $okd_namespace configmap $config_map --from-literal=RUNTIME_ENV_TYPE=k8s")
+	            if (statusCreate != 0){
+	              sh "echo Unable to create $config_map in $okd_namespace as it already exists"
+	            }else{
+	              stage('OpenShift configmap created'){
+	                sh "echo OpenShift configmap successfully created"
+	              }
+	            }
+	          }
+	        }
+	      }
 
-    stage('Delete existing Kubernetes service') {
-      steps {
-        sh 'kubectl delete service $k8s_app --namespace=$k8s_namespace'
-      }
-    }*/
+	    stage('OpenShift deployment') {
+	      steps {
+	        sh 'oc apply -n $okd_namespace -f $git_subdirectory/$deploymemt_yaml'
+	      }
+	    }
 
-    stage('Kubernetes configmap') {
-      steps {
-        script {
-          sh "echo creating kubectl create -n $k8s_namespace configmap $config_map --from-literal=RUNTIME_ENV_TYPE=k8s"
-          statusCreate = sh(returnStatus: true, script: "kubectl create -n $k8s_namespace configmap $config_map --from-literal=RUNTIME_ENV_TYPE=k8s")
-          if (statusCreate != 0){
-            sh "echo Unable to create $config_map in $k8s_namespace as it already exists"
-          }else{
-            stage('Kubernetes configmap created'){
-              sh "echo Kubernetes configmap successfully created"
-            }
-          }
-        }
-      }
-    }
-
-    stage('Kubernetes deployment') {
-      steps {
-        sh 'kubectl apply -n $k8s_namespace -f $application/$deploymemt_yaml'
-      }
-    }
-
-    stage('Kubernetes service') {
-      steps {
-        sh 'kubectl apply -n $k8s_namespace -f $application/$service_yaml'
-      }
-    }
-  }
+	    stage('OpenShift service') {
+	      steps {
+	        sh 'oc apply -n $okd_namespace -f $git_subdirectory/$service_yaml'
+	      }
+	    }
+	  }
 }

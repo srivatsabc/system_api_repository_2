@@ -6,19 +6,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: airports-locator-app-v001
+  name: airports-locator-app
 spec:
   selector:
       matchLabels:
-        app: airports-locator-app-v001
+        app: airports-locator-app
   replicas: 1
   template:
     metadata:
       labels:
-        app: airports-locator-app-v001
+        app: airports-locator-app
     spec:
       nodeSelector:
-        region: primary
+        kubernetes.io/system-apis: allow
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -27,18 +27,18 @@ spec:
               - key: app
                 operator: In
                 values:
-                - airports-locator-app-v001
+                - airports-locator-app
             topologyKey: "kubernetes.io/hostname"
       # ----------------------------------
       # will target master node deployment
-      #tolerations:
-      #  - key: "node-role.kubernetes.io/master"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
       # ----------------------------------
       containers:
-        - name: airports-locator-app-v001
-          image: srivatsabc/airports-locator-app:os-s-api-v0.0.1
+        - name: airports-locator-app
+          image: srivatsabc/airports-locator-app:system-api-v0.0.1
           imagePullPolicy: Always
           ports:
             - containerPort: 8088
@@ -46,5 +46,5 @@ spec:
             - name: RUNTIME_ENV_TYPE #In order to help mule application pickup the right jdbc properties
               valueFrom:
                 configMapKeyRef:
-                  name: airports-locator-app-v001-config
+                  name: airports-locator-app-config
                   key: RUNTIME_ENV_TYPE
