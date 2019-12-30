@@ -38,7 +38,7 @@ spec:
       # ----------------------------------
       containers:
         - name: airports-locator-app-v001
-          image: srivatsabc/airports-locator-app:os-s-api-v0.0.1
+          image: docker-registry.default.svc:5000/system-api-ns/airports-locator-app:os-s-api-v0.0.1
           imagePullPolicy: Always
           ports:
             - containerPort: 8088
